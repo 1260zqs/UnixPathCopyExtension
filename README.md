@@ -4,3 +4,9 @@
 eg.
 C:\Windows\System32\kernel32.dll
 C:/Windows/System32/kernel32.dll
+
+##安装
+regsvr32 CopyPath_win_x64.dll
+
+##卸载
+regsvr32 /u CopyPath.dll 
