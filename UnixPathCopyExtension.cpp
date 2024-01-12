@@ -36,12 +36,15 @@ WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
 #include <sstream>
 #include "framework.h"
 #pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "Msimg32.lib")
 
 extern HINSTANCE g_hInst;
 extern long g_cDllRef;
 HBITMAP GetBitmapFromModuleResource(HMODULE hModule, int resourceId);
+HBITMAP CreateBitmapFromIcon(HICON hIcon);
 HRESULT CopyToClipboard(HGLOBAL hGlobal);
 void ReplaceChar(LPWSTR input, WCHAR oldChar, WCHAR newChar);
+void ReplaceChar(LPSTR input, CHAR oldChar, CHAR newChar);
 
 #define IDM_DISPLAY             0  // The command's identifier offset
 
@@ -108,10 +111,50 @@ void UnixPathCopyExtension::OnVerbDisplayFileName(LPCMINVOKECOMMANDINFO pici)
                         CopyToClipboard(hGlobal);
                     }
                 }
+                else
+                {
+                    OutputDebugString(L"no file selected");
+                }
                 GlobalUnlock(stm.hGlobal);
             }
             ReleaseStgMedium(&stm);
         }
+    }
+    else if (pici && pici->lpDirectory)
+    {
+        int charCount = MultiByteToWideChar(CP_ACP, 0, pici->lpDirectory, -1, NULL, 0);
+        if (charCount > 0)
+        {
+            size_t bufferSize = charCount * sizeof(WCHAR);
+            HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, bufferSize);
+            if (hGlobal)
+            {
+                LPWSTR pszData = static_cast<LPWSTR>(GlobalLock(hGlobal));
+                ZeroMemory(pszData, bufferSize);
+                if (MultiByteToWideChar(CP_ACP, 0, pici->lpDirectory, -1, pszData, charCount))
+                {
+                    ReplaceChar(pszData, '\\', '/');
+                    GlobalUnlock(hGlobal);
+                    CopyToClipboard(hGlobal);
+                }
+                else
+                {
+                    GlobalUnlock(hGlobal);
+                }
+            }
+        }
+        // size_t bufferSize = strlen(pici->lpDirectory) * sizeof(CHAR) + 1;
+        // if (hGlobal)
+        // {
+        //     LPWSTR pszData = static_cast<LPWSTR>(GlobalLock(hGlobal));
+        //     ZeroMemory(pszData, bufferSize * sizeof(CHAR));
+        //     memcpy(pszData, pici->lpDirectory, bufferSize);
+        //     ReplaceChar(pszData, '\\', '/');
+        //     GlobalUnlock(hGlobal);
+        //     CopyToClipboard(hGlobal);
+        // }
+        OutputDebugStringA("use lpDirectory");
+        OutputDebugStringA(pici->lpDirectory);
     }
 }
 
@@ -201,19 +244,27 @@ IFACEMETHODIMP UnixPathCopyExtension::QueryContextMenu(HMENU hMenu, UINT indexMe
     // HBITMAP hbitmap = GetBitmapFromModuleResource(imageres, 5302);
     // mii.hbmpItem = hbitmap;
     // FreeLibrary(imageres);
+    // HMODULE imageres = LoadLibrary(L"imageres.dll");
+    // HICON hSystemIcon = LoadIcon(imageres, MAKEINTRESOURCE(5302));
+    // if (hSystemIcon)
+    // {
+    //     mii.hbmpItem = CreateBitmapFromIcon(hSystemIcon);
+    //     DestroyIcon(hSystemIcon);
+    // }
+    // if (imageres) FreeLibrary(imageres);
     if (!InsertMenuItem(hMenu, indexMenu, TRUE, &mii))
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
     // Add a separator.
-    MENUITEMINFOW sep = {sizeof(sep)};
-    sep.fMask = MIIM_TYPE;
-    sep.fType = MFT_SEPARATOR;
-    if (!InsertMenuItem(hMenu, indexMenu + 1, TRUE, &sep))
-    {
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
+    // MENUITEMINFOW sep = {sizeof(sep)};
+    // sep.fMask = MIIM_TYPE;
+    // sep.fType = MFT_SEPARATOR;
+    // if (!InsertMenuItem(hMenu, indexMenu + 1, TRUE, &sep))
+    // {
+    //     return HRESULT_FROM_WIN32(GetLastError());
+    // }
 
     // Return an HRESULT value with the severity set to SEVERITY_SUCCESS. 
     // Set the code value to the offset of the largest command identifier 
@@ -363,6 +414,29 @@ IFACEMETHODIMP UnixPathCopyExtension::GetCommandString(UINT_PTR idCommand, UINT 
 
 #pragma endregion
 
+HBITMAP CreateBitmapFromIcon(HICON hIcon)
+{
+    ICONINFO iconInfo;
+    GetIconInfo(hIcon, &iconInfo);
+
+    BITMAP bm;
+    GetObject(iconInfo.hbmColor, sizeof(bm), &bm);
+
+    HDC hdc = GetDC(nullptr);
+    HDC hdcMem = CreateCompatibleDC(hdc);
+    HBITMAP hBitmap = CreateCompatibleBitmap(hdc, 16, 16);  // Adjust the size as needed
+    SelectObject(hdcMem, hBitmap);
+
+    // Draw the icon into the smaller bitmap with transparency
+    DrawIconEx(hdcMem, 0, 0, hIcon, 16, 16, 0, nullptr, DI_NORMAL);
+
+    DeleteObject(iconInfo.hbmColor);
+    DeleteObject(iconInfo.hbmMask);
+    DeleteDC(hdcMem);
+    ReleaseDC(nullptr, hdc);
+
+    return hBitmap;
+}
 
 HBITMAP GetBitmapFromModuleResource(HMODULE hModule, int resourceId)
 {
@@ -435,6 +509,18 @@ HRESULT CopyToClipboard(HGLOBAL hGlobal)
 
 
 void ReplaceChar(LPWSTR input, WCHAR oldChar, WCHAR newChar)
+{
+    while (*input)
+    {
+        if (*input == oldChar)
+        {
+            *input = newChar;
+        }
+        input++;
+    }
+}
+
+void ReplaceChar(LPSTR input, CHAR oldChar, CHAR newChar)
 {
     while (*input)
     {

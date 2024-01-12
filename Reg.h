@@ -52,8 +52,7 @@ WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
 //      }
 //   }
 //
-HRESULT RegisterInprocServer(PCWSTR pszModule, const CLSID& clsid, 
-    PCWSTR pszFriendlyName, PCWSTR pszThreadModel);
+HRESULT RegisterInprocServer(PCWSTR pszModule, const CLSID& clsid, PCWSTR pszFriendlyName, PCWSTR pszThreadModel);
 
 
 //
@@ -97,7 +96,7 @@ HRESULT UnregisterInprocServer(const CLSID& clsid);
 //      }
 //   }
 //
-HRESULT RegisterShellExtContextMenuHandler(PCWSTR pszFileType, const CLSID& clsid, PCWSTR pszFriendlyName);
+HRESULT RegisterShellExtContextMenuHandler(const CLSID& clsid, PCWSTR pszFriendlyName);
 
 
 //
@@ -114,4 +113,4 @@ HRESULT RegisterShellExtContextMenuHandler(PCWSTR pszFileType, const CLSID& clsi
 //   NOTE: The function removes the {<CLSID>} key under 
 //   HKCR\<File Type>\shellex\ContextMenuHandlers in the registry.
 //
-HRESULT UnregisterShellExtContextMenuHandler(PCWSTR pszFileType, const CLSID& clsid);
+HRESULT UnregisterShellExtContextMenuHandler(const CLSID& clsid, PCWSTR pszFriendlyName);

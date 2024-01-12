@@ -4,9 +4,9 @@
 // Windows 头文件
 #include <windows.h>
 
-#define L_Menu_Text L"Copy Path (Unix Format)"
+#define L_Menu_Text L"Copy Unix Format Path"
 
-#define Verb_Name "Copy Path (Unix Format)"
+#define Verb_Name "Copy Unix Format Path"
 #define L_Verb_Name TEXT(Verb_Name)
 
 #define Verb_Canonical_Name Verb_Name
@@ -15,7 +15,7 @@
 #define Verb_Help_Text "Copy Path As Unix Format \"/\""
 #define L_Verb_Help_Text TEXT(Verb_Help_Text)
 
-#define L_Friendly_Menu_Name L"CopyPathAsUnixFormat"
-#define L_Friendly_Class_Name L"ContextMenuHandler.CopyPathAsUnixFormat"
+#define L_Friendly_Menu_Name L"UnixPathCopyExtension"
+#define L_Friendly_Class_Name L"UnixPathCopyExtension"
 
 
